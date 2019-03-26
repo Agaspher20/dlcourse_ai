@@ -1,5 +1,6 @@
 #%% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
 import os
+import sys
 
 try:
     currentWorkingDirectory = os.getcwd()
@@ -7,14 +8,15 @@ try:
 
     workingDirectory = os.path.join(
         currentWorkingDirectory,
-        "dlcourse_ai\\assignments\\assignment1"
+        "assignments\\assignment1"
     )
 
     print("Trying to change to {}".format(workingDirectory))
     os.chdir(workingDirectory)
     print("Change successful")
 except:
-    print("Directory change failed")
+    print("Directory change failed", sys.exc_info()[0])
+
 #%% [markdown]
 # # Задание 1.2 - Линейный классификатор (Linear classifier)
 # 
@@ -33,18 +35,15 @@ except:
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
-
+# pylint: disable=undefined-variable
 get_ipython().run_line_magic('matplotlib', 'inline')
-
 get_ipython().run_line_magic('load_ext', 'autoreload')
 get_ipython().run_line_magic('autoreload', '2')
-
+# pylint: enable=undefined-variable
 
 #%%
 from dataset import load_svhn, random_split_train_val
-from gradient_check import check_gradient
-from metrics import multiclass_accuracy 
-import linear_classifer
+from metrics import multiclass_accuracy
 
 #%% [markdown]
 # # Как всегда, первым делом загружаем данные
@@ -79,13 +78,14 @@ train_X, train_y, val_X, val_y = random_split_train_val(train_X, train_y, num_va
 # Необходимым инструментом во время реализации кода, вычисляющего градиенты, является функция его проверки. Эта функция вычисляет градиент численным методом и сверяет результат с градиентом, вычисленным аналитическим методом.
 # 
 # Мы начнем с того, чтобы реализовать вычисление численного градиента (numeric gradient) в этой функции.
-# Вычислите градиент с помощью численной производной для каждой координаты. Для вычисления производной используйте так называемую two-point formula (https://en.wikipedia.org/wiki/Numerical_differentiation):
+# Вычислите градиент с помощью численной производной для каждой координаты. Для вычисления производной используйте так называемую [two-point formula](https://en.wikipedia.org/wiki/Numerical_differentiation):
 # 
 # ![image](https://wikimedia.org/api/rest_v1/media/math/render/svg/22fc2c0a66c63560a349604f8b6b39221566236d)
 # 
 
 #%%
-# TODO: Implement gradient check function
+from gradient_check import check_gradient
+
 def sqr(x):
     return x*x, 2*x
 
@@ -101,7 +101,10 @@ def array_2d_sum(x):
     assert x.shape == (2,2)
     return np.sum(x), np.ones_like(x)
 
-check_gradient(array_2d_sum, np.array([[3.0, 2.0], [1.0, 0.0]]))
+check_gradient(array_2d_sum, np.array([
+    [3.0, 2.0],
+    [1.0, 0.0]
+]))
 
 #%% [markdown]
 # Теперь реализуем функцию softmax, которая получает на вход оценки для каждого класса и преобразует их в вероятности от 0 до 1:
@@ -113,15 +116,18 @@ check_gradient(array_2d_sum, np.array([[3.0, 2.0], [1.0, 0.0]]))
 # ```
 # predictions -= np.max(predictions)
 # ```
-# (подробнее здесь - http://cs231n.github.io/linear-classify/#softmax, секция `Practical issues: Numeric stability`)
+# ([подробнее здесь](http://cs231n.github.io/linear-classify/#softmax), секция `Practical issues: Numeric stability`)
 
 #%%
-# TODO Implement softmax and cross-entropy for single sample
-probs = linear_classifer.softmax(np.array([-10, 0, 10]))
+from linear_classifer import softmax
+
+probs = softmax(np.array([[-10, 0, 10]]))
+assert np.isclose(np.sum(probs), 1.0)
 
 # Make sure it works for big numbers too!
-probs = linear_classifer.softmax(np.array([1000, 0, 0]))
-assert np.isclose(probs[0], 1.0)
+probs = softmax(np.array([[1000, 0, 0]]))
+
+assert np.isclose(probs[0][0], 1.0)
 
 #%% [markdown]
 # Кроме этого, мы реализуем cross-entropy loss, которую мы будем использовать как функцию ошибки (error function).
@@ -134,8 +140,10 @@ assert np.isclose(probs[0], 1.0)
 # Это позволяет реализовать функцию проще!
 
 #%%
-probs = linear_classifer.softmax(np.array([-5, 0, 5]))
-linear_classifer.cross_entropy_loss(probs, 1)
+from linear_classifer import cross_entropy_loss
+
+probs = softmax(np.array([[-5, 0, 5]],))
+cross_entropy_loss(probs, np.array([1]))
 
 #%% [markdown]
 # После того как мы реализовали сами функции, мы можем реализовать градиент.
@@ -145,9 +153,14 @@ linear_classifer.cross_entropy_loss(probs, 1)
 # Эта функция `softmax_with_cross_entropy` будет возвращает и значение ошибки, и градиент по входным параметрам. Мы проверим корректность реализации с помощью `check_gradient`.
 
 #%%
-# TODO Implement combined function or softmax and cross entropy and produces gradient
-loss, grad = linear_classifer.softmax_with_cross_entropy(np.array([1, 0, 0]), 1)
-check_gradient(lambda x: linear_classifer.softmax_with_cross_entropy(x, 1), np.array([1, 0, 0], np.float))
+from linear_classifer import softmax_with_cross_entropy
+
+loss, grad = softmax_with_cross_entropy(np.array([[1, 0, 0]]), np.array([1]))
+
+print(loss, grad)
+check_gradient(
+    lambda x: softmax_with_cross_entropy(x, np.array([1])),
+    np.array([[1, 0, 0]], np.float))
 
 #%% [markdown]
 # В качестве метода тренировки мы будем использовать стохастический градиентный спуск (stochastic gradient descent или SGD), который работает с батчами сэмплов. 
@@ -159,19 +172,26 @@ check_gradient(lambda x: linear_classifer.softmax_with_cross_entropy(x, 1), np.a
 # Финальное значение функции ошибки должно остаться числом, и оно равно среднему значению ошибки среди всех примеров в батче.
 
 #%%
-# TODO Extend combined function so it can receive a 2d array with batch of samples
+from linear_classifer import cross_entropy_loss, softmax_with_cross_entropy
 
 # Test batch_size = 1
 batch_size = 1
 predictions = np.zeros((batch_size, 3))
 target_index = np.ones(batch_size, np.int)
-check_gradient(lambda x: linear_classifer.softmax_with_cross_entropy(x, target_index), predictions)
 
+loss, grad = softmax_with_cross_entropy(predictions, target_index)
+print("First test. Loss: {}, Grad: {}".format(loss, grad))
+check_gradient(lambda x: softmax_with_cross_entropy(x, target_index), predictions)
+
+print("Second test")
 # Test batch_size = 3
 batch_size = 3
 predictions = np.zeros((batch_size, 3))
 target_index = np.ones(batch_size, np.int)
-check_gradient(lambda x: linear_classifer.softmax_with_cross_entropy(x, target_index), predictions)
+
+loss, grad = softmax_with_cross_entropy(predictions, target_index)
+print("Second test. Loss: {}, Grad: {}".format(loss, grad))
+check_gradient(lambda x: softmax_with_cross_entropy(x, target_index), predictions)
 
 #%% [markdown]
 # ### Наконец, реализуем сам линейный классификатор!
@@ -274,5 +294,3 @@ print('best validation accuracy achieved: %f' % best_val_accuracy)
 test_pred = best_classifier.predict(test_X)
 test_accuracy = multiclass_accuracy(test_pred, test_y)
 print('Linear softmax classifier test set accuracy: %f' % (test_accuracy, ))
-
-

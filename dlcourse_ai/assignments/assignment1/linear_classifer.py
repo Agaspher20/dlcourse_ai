@@ -13,8 +13,13 @@ def softmax(predictions):
       probs, np array of the same shape as predictions - 
         probability for every class, 0..1
     '''
-    # TODO implement softmax
-    raise Exception("Not implemented!")
+
+    columns = np.ones(predictions.shape[1])
+    predictions_normalized = predictions - np.outer(np.max(predictions, axis=1), columns)
+    predictions_exp = np.exp(predictions_normalized)
+    predictions_sum = np.outer(np.sum(predictions_exp, axis=1), columns)
+
+    return predictions_exp/predictions_sum
 
 
 def cross_entropy_loss(probs, target_index):
@@ -30,8 +35,10 @@ def cross_entropy_loss(probs, target_index):
     Returns:
       loss: single value
     '''
-    # TODO implement cross-entropy
-    raise Exception("Not implemented!")
+
+    rows_count = target_index.shape[0]
+
+    return np.sum(-np.log(probs[range(rows_count), target_index]))/rows_count
 
 
 def softmax_with_cross_entropy(predictions, target_index):
@@ -49,10 +56,15 @@ def softmax_with_cross_entropy(predictions, target_index):
       loss, single value - cross-entropy loss
       dprediction, np array same shape as predictions - gradient of predictions by loss value
     '''
-    # TODO implement softmax with cross-entropy
-    raise Exception("Not implemented!")
 
-    return loss, dprediction
+    rows_count = target_index.shape[0]
+    probas = softmax(predictions)
+    loss = cross_entropy_loss(probas, target_index)
+    
+    probas[range(rows_count), target_index] -= 1
+    probas /= rows_count
+
+    return loss, probas
 
 
 def l2_regularization(W, reg_strength):
@@ -155,12 +167,3 @@ class LinearSoftmaxClassifier():
         raise Exception("Not implemented!")
 
         return y_pred
-
-
-
-                
-                                                          
-
-            
-
-                
