@@ -14,10 +14,10 @@ def softmax(predictions):
         probability for every class, 0..1
     '''
 
-    columns = np.ones(predictions.shape[1])
-    predictions_normalized = predictions - np.outer(np.max(predictions, axis=1), columns)
+    maxes = np.max(predictions, axis=1)[:, np.newaxis]
+    predictions_normalized = predictions - maxes
     predictions_exp = np.exp(predictions_normalized)
-    predictions_sum = np.outer(np.sum(predictions_exp, axis=1), columns)
+    predictions_sum = np.sum(predictions_exp, axis=1)[:, np.newaxis]
 
     return predictions_exp/predictions_sum
 
