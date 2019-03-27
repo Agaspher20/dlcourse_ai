@@ -78,9 +78,10 @@ train_X, train_y, val_X, val_y = random_split_train_val(train_X, train_y, num_va
 # 
 # Мы начнем с того, чтобы реализовать вычисление численного градиента (numeric gradient) в этой функции.
 # Вычислите градиент с помощью численной производной для каждой координаты. Для вычисления производной используйте так называемую [two-point formula](https://en.wikipedia.org/wiki/Numerical_differentiation):
-# 
-# ![image](https://wikimedia.org/api/rest_v1/media/math/render/svg/22fc2c0a66c63560a349604f8b6b39221566236d)
-# 
+#
+# $$
+# \frac{f(x + h) - f(x - h)}{2h}
+# $$
 
 #%%
 from gradient_check import check_gradient
@@ -107,7 +108,10 @@ check_gradient(array_2d_sum, np.array([
 
 #%% [markdown]
 # Теперь реализуем функцию softmax, которая получает на вход оценки для каждого класса и преобразует их в вероятности от 0 до 1:
-# ![image](https://wikimedia.org/api/rest_v1/media/math/render/svg/e348290cf48ddbb6e9a6ef4e39363568b67c09d3)
+# 
+# $$
+# \sigma(z)_j = \frac{e^{z_j}}{\displaystyle\sum_{k=1}^K e^{z_k}}
+# $$
 # 
 # **Важно:** Практический аспект вычисления этой функции заключается в том, что в ней учавствует вычисление экспоненты от потенциально очень больших чисел - это может привести к очень большим значениям в числителе и знаменателе за пределами диапазона float.
 # 
@@ -131,11 +135,14 @@ assert np.isclose(probs[0][0], 1.0)
 #%% [markdown]
 # Кроме этого, мы реализуем cross-entropy loss, которую мы будем использовать как функцию ошибки (error function).
 # В общем виде cross-entropy определена следующим образом:
-# ![image](https://wikimedia.org/api/rest_v1/media/math/render/svg/0cb6da032ab424eefdca0884cd4113fe578f4293)
-# 
-# где x - все классы, p(x) - истинная вероятность принадлежности сэмпла классу x, а q(x) - вероятность принадлежности классу x, предсказанная моделью.  
-# В нашем случае сэмпл принадлежит только одному классу, индекс которого передается функции. Для него p(x) равна 1, а для остальных классов - 0. 
-# 
+#
+# $$
+# H(p,q) = -\displaystyle\sum_x p(x)\,\log q(x).
+# $$
+#
+# где $x$ - все классы, $p(x)$ - истинная вероятность принадлежности сэмпла классу $x$, а $q(x)$ - вероятность принадлежности классу $x$, предсказанная моделью.
+# В нашем случае сэмпл принадлежит только одному классу, индекс которого передается функции. Для него $p(x)$ равна 1, а для остальных классов - 0.
+#
 # Это позволяет реализовать функцию проще!
 
 #%%
@@ -245,14 +252,19 @@ check_gradient(lambda w: l2_regularization(w, 0.01), W)
 
 #%%
 from linear_classifer import LinearSoftmaxClassifier
+num_epochs = 200
+batch_size = 300
+default_learning_rate=1e-3
+default_reg_strength=1e1
+
 classifier = LinearSoftmaxClassifier()
 loss_history = classifier.fit(
     train_X,
     train_y,
     epochs=10,
-    learning_rate=1e-3,
-    batch_size=300,
-    reg=1e1)
+    learning_rate=default_learning_rate,
+    batch_size=batch_size,
+    reg=default_reg_strength)
 
 #%%
 # let's look at the loss history!
@@ -265,10 +277,16 @@ accuracy = multiclass_accuracy(pred, val_y)
 print("Accuracy: ", accuracy)
 
 # Now, let's train more and see if it performs better
-loss_history = classifier.fit(train_X, train_y, epochs=100, learning_rate=1e-3, batch_size=300, reg=1e1)
+loss_history = classifier.fit(
+    train_X,
+    train_y,
+    epochs=num_epochs,
+    learning_rate=default_learning_rate,
+    batch_size=batch_size,
+    reg=default_reg_strength)
 pred = classifier.predict(val_X)
 accuracy = multiclass_accuracy(pred, val_y)
-print("Accuracy after training for 100 epochs: ", accuracy)
+print("Accuracy after training for {} epochs: {}".format(num_epochs, accuracy))
 
 #%% [markdown]
 # ### Как и раньше, используем кросс-валидацию для подбора гиперпараметтов.
@@ -279,18 +297,61 @@ print("Accuracy after training for 100 epochs: ", accuracy)
 # Добейтесь точности более чем **20%** на проверочных данных (validation data).
 
 #%%
-num_epochs = 200
-batch_size = 300
+learning_rates = [5, 2.5, 1, 0.5, 0.1, 1e-3, 1e-4, 1e-5]
 
-learning_rates = [1e-3, 1e-4, 1e-5]
-reg_strengths = [1e-4, 1e-5, 1e-6]
+best_learning_rate = default_learning_rate
+best_val_accuracy = accuracy
+best_loss_history = loss_history
+best_classifier = classifier
+for learning_rate in learning_rates:
+    print("\nLearning rate {}:".format(learning_rate))
+    rate_classifier = LinearSoftmaxClassifier()
+    loss_history = rate_classifier.fit(
+        train_X,
+        train_y,
+        epochs=num_epochs,
+        learning_rate=learning_rate,
+        batch_size=batch_size,
+        reg=default_reg_strength)
+    pred = rate_classifier.predict(val_X)
+    accuracy = multiclass_accuracy(pred, val_y)
 
-best_classifier = None
-best_val_accuracy = None
+    if accuracy > best_val_accuracy:
+        best_val_accuracy = accuracy
+        best_learning_rate = learning_rate
+        best_loss_history = loss_history
+        best_classifier = rate_classifier
+print("Best learning rate is: ", best_learning_rate)
+print("Best accuracy for learning rate is: ", best_val_accuracy)
+plt.plot(best_loss_history)
 
-# TODO use validation set to find the best hyperparameters
-# hint: for best results, you might need to try more values for learning rate and regularization strength 
-# than provided initially
+#%%
+reg_strengths = [5, 2, 1, 0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 0]
+
+best_reg_strength = default_reg_strength
+for reg_srength in reg_strengths:
+    print("\nReg strength {}:".format(reg_srength))
+    reg_classifier = LinearSoftmaxClassifier()
+    loss_history = reg_classifier.fit(
+        train_X,
+        train_y,
+        epochs=num_epochs,
+        learning_rate=best_learning_rate,
+        batch_size=batch_size,
+        reg=reg_srength)
+    pred = reg_classifier.predict(val_X)
+    accuracy = multiclass_accuracy(pred, val_y)
+
+    if accuracy > best_val_accuracy:
+        best_val_accuracy = accuracy
+        best_reg_strength = reg_srength
+        best_loss_history = loss_history
+        best_classifier = reg_classifier
+print("Best reg strength is: ", best_learning_rate)
+print("Best accuracy for reg strength is: ", best_val_accuracy)
+plt.plot(best_loss_history)
+
+#%%
 
 print('best validation accuracy achieved: %f' % best_val_accuracy)
 
@@ -301,3 +362,5 @@ print('best validation accuracy achieved: %f' % best_val_accuracy)
 test_pred = best_classifier.predict(test_X)
 test_accuracy = multiclass_accuracy(test_pred, test_y)
 print('Linear softmax classifier test set accuracy: %f' % (test_accuracy, ))
+
+#%%
