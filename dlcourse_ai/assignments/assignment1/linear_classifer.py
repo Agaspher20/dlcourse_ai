@@ -163,4 +163,4 @@ class LinearSoftmaxClassifier():
         Returns:
           y_pred, np.array of int (test_samples)
         '''
-        return X@self.W
+        return np.argmax(X@self.W, axis=1)
