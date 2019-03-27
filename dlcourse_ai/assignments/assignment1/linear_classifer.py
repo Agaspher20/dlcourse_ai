@@ -135,20 +135,16 @@ class LinearSoftmaxClassifier():
             np.random.shuffle(shuffled_indices)
             sections = np.arange(batch_size, num_train, batch_size)
             batches_indices = np.array_split(shuffled_indices, sections)
+            batch_indices = batches_indices[np.random.randint(0, len(batches_indices))]
+            batch = X[batch_indices, :]
+            batch_target = y[batch_indices]
+            ce_loss, d_ce_loss = linear_softmax(batch, self.W, batch_target)
+            reg_loss, dreg_loss = l2_regularization(self.W, reg)
+            loss = ce_loss + reg_loss
+            dW = d_ce_loss + dreg_loss
+            self.W -= dW*learning_rate
 
-            for batch_indices in batches_indices:
-                batch = X[batch_indices, :]
-                target_batch = y[batch_indices]
-
-                ce_loss, d_ce_loss = linear_softmax(batch, self.W, target_batch)
-                reg_loss, dreg_loss = l2_regularization(self.W, reg)
-
-                loss = ce_loss + reg_loss
-                dW = d_ce_loss + dreg_loss
-                self.W -= dW*learning_rate
-
-                loss_history.append(loss)
-            # end
+            loss_history.append(loss)
             print("Epoch %i, loss: %f" % (epoch, loss))
 
         return loss_history
