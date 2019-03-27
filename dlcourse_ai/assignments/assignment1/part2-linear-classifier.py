@@ -29,8 +29,7 @@ except:
 # - реализуете процесс тренировки линейного классификатора
 # - подберете параметры тренировки на практике
 # 
-# На всякий случай, еще раз ссылка на туториал по numpy:  
-# http://cs231n.github.io/python-numpy-tutorial/
+# На всякий случай, еще раз ссылка на [туториал по numpy](http://cs231n.github.io/python-numpy-tutorial/)
 
 #%%
 import numpy as np
@@ -172,7 +171,7 @@ check_gradient(
 # Финальное значение функции ошибки должно остаться числом, и оно равно среднему значению ошибки среди всех примеров в батче.
 
 #%%
-from linear_classifer import cross_entropy_loss, softmax_with_cross_entropy
+from linear_classifer import softmax_with_cross_entropy
 
 # Test batch_size = 1
 batch_size = 1
@@ -207,7 +206,8 @@ check_gradient(lambda x: softmax_with_cross_entropy(x, target_index), prediction
 # Реализуйте функцию подсчета линейного классификатора и градиентов по весам `linear_softmax` в файле `linear_classifer.py`
 
 #%%
-# TODO Implement linear_softmax function that uses softmax with cross-entropy for linear classifier
+from linear_classifer import linear_softmax
+
 batch_size = 2
 num_classes = 2
 num_features = 3
@@ -216,8 +216,8 @@ W = np.random.randint(-1, 3, size=(num_features, num_classes)).astype(np.float)
 X = np.random.randint(-1, 3, size=(batch_size, num_features)).astype(np.float)
 target_index = np.ones(batch_size, dtype=np.int)
 
-loss, dW = linear_classifer.linear_softmax(X, W, target_index)
-check_gradient(lambda w: linear_classifer.linear_softmax(X, w, target_index), W)
+loss, dW = linear_softmax(X, W, target_index)
+check_gradient(lambda w: linear_softmax(X, w, target_index), W)
 
 #%% [markdown]
 # ### И теперь регуляризация
@@ -225,15 +225,18 @@ check_gradient(lambda w: linear_classifer.linear_softmax(X, w, target_index), W)
 # Мы будем использовать L2 regularization для весов как часть общей функции ошибки.
 # 
 # Напомним, L2 regularization определяется как
-# 
-# l2_reg_loss = regularization_strength * sum<sub>ij</sub> W[i, j]<sup>2</sup>
-# 
+#$$
+# \lambda*\sum\limits_{i=1}{W^2}
+#$$
+# Where $\lambda$ - regularization strength.
+
 # Реализуйте функцию для его вычисления и вычисления соотвествующих градиентов.
 
 #%%
-# TODO Implement l2_regularization function that implements loss for L2 regularization
-linear_classifer.l2_regularization(W, 0.01)
-check_gradient(lambda w: linear_classifer.l2_regularization(w, 0.01), W)
+from linear_classifer import l2_regularization
+
+print(l2_regularization(W, 0.01))
+check_gradient(lambda w: l2_regularization(w, 0.01), W)
 
 #%% [markdown]
 # # Тренировка!
@@ -241,15 +244,28 @@ check_gradient(lambda w: linear_classifer.l2_regularization(w, 0.01), W)
 # Градиенты в порядке, реализуем процесс тренировки!
 
 #%%
-# TODO: Implement LinearSoftmaxClassifier.fit function
-classifier = linear_classifer.LinearSoftmaxClassifier()
-loss_history = classifier.fit(train_X, train_y, epochs=10, learning_rate=1e-3, batch_size=300, reg=1e1)
+def sum_fun(x):
+    print("Value in sum fun", x)
+    return x**2 + 1
 
+vect = np.vectorize(sum_fun)
+print("Input", np.arange(1,5))
+vect(np.arange(1,5))
+
+#%%
+from linear_classifer import LinearSoftmaxClassifier
+classifier = LinearSoftmaxClassifier()
+loss_history = classifier.fit(
+    train_X,
+    train_y,
+    epochs=10,
+    learning_rate=1e-3,
+    batch_size=300,
+    reg=1e1)
 
 #%%
 # let's look at the loss history!
 plt.plot(loss_history)
-
 
 #%%
 # Let's check how it performs on validation set
