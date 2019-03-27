@@ -244,15 +244,6 @@ check_gradient(lambda w: l2_regularization(w, 0.01), W)
 # Градиенты в порядке, реализуем процесс тренировки!
 
 #%%
-def sum_fun(x):
-    print("Value in sum fun", x)
-    return x**2 + 1
-
-vect = np.vectorize(sum_fun)
-print("Input", np.arange(1,5))
-vect(np.arange(1,5))
-
-#%%
 from linear_classifer import LinearSoftmaxClassifier
 classifier = LinearSoftmaxClassifier()
 loss_history = classifier.fit(
