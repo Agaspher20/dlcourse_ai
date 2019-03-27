@@ -265,7 +265,7 @@ accuracy = multiclass_accuracy(pred, val_y)
 print("Accuracy: ", accuracy)
 
 # Now, let's train more and see if it performs better
-classifier.fit(train_X, train_y, epochs=100, learning_rate=1e-3, batch_size=300, reg=1e1)
+loss_history = classifier.fit(train_X, train_y, epochs=100, learning_rate=1e-3, batch_size=300, reg=1e1)
 pred = classifier.predict(val_X)
 accuracy = multiclass_accuracy(pred, val_y)
 print("Accuracy after training for 100 epochs: ", accuracy)
