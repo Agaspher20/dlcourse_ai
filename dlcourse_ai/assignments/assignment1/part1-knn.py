@@ -6,7 +6,7 @@ try:
 
     workingDirectory = os.path.join(
         currentWorkingDirectory,
-        "dlcourse_ai\\assignments\\assignment1"
+        "assignments\\assignment1"
     )
 
     print("Trying to change to {}".format(workingDirectory))
@@ -29,10 +29,9 @@ except:
 # 
 # Перед выполнением задания:
 # - запустите файл `download_data.sh`, чтобы скачать данные, которые мы будем использовать для тренировки
-# - установите все необходимые библиотеки, запустив `pip install -r requirements.txt` (если раньше не работали с `pip`, вам сюда - https://pip.pypa.io/en/stable/quickstart/)
+# - установите все необходимые библиотеки, запустив `pip install -r requirements.txt` (если раньше не работали с `pip`, [вам сюда](https://pip.pypa.io/en/stable/quickstart/))
 # 
-# Если вы раньше не работали с numpy, вам может помочь tutorial. Например этот:  
-# http://cs231n.github.io/python-numpy-tutorial/
+# Если вы раньше не работали с numpy, вам может помочь tutorial. [Например этот](http://cs231n.github.io/python-numpy-tutorial/).
 
 #%%
 import random
@@ -55,7 +54,7 @@ from metrics import binary_classification_metrics, multiclass_accuracy
 # 
 # В задании уже дана функция `load_svhn`, загружающая данные с диска. Она возвращает данные для тренировки и для тестирования как numpy arrays.
 # 
-# Мы будем использовать цифры из датасета Street View House Numbers (SVHN, http://ufldl.stanford.edu/housenumbers/), чтобы решать задачу хоть сколько-нибудь сложнее MNIST.
+# Мы будем использовать цифры из датасета Street View House Numbers ([SVHN](http://ufldl.stanford.edu/housenumbers/)), чтобы решать задачу хоть сколько-нибудь сложнее MNIST.
 
 #%%
 train_X, train_y, test_X, test_y = load_svhn(
@@ -123,7 +122,7 @@ knn_classifier.fit(binary_train_X, binary_train_y)
 # 
 # **Обратите внимание** Для простоты реализации мы будем использовать в качестве расстояния меру L1 (ее еще называют [Manhattan distance](https://ru.wikipedia.org/wiki/%D0%A0%D0%B0%D1%81%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D0%B5_%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%D1%81%D0%BA%D0%B8%D1%85_%D0%BA%D0%B2%D0%B0%D1%80%D1%82%D0%B0%D0%BB%D0%BE%D0%B2)).
 # 
-# ![image.png](attachment:image.png)
+# ![image.png](https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Manhattan_distance.svg/800px-Manhattan_distance.svg.png)
 
 #%%
 dists = knn_classifier.compute_distances_two_loops(binary_test_X)
@@ -146,9 +145,6 @@ get_ipython().run_line_magic('timeit', 'knn_classifier.compute_distances_no_loop
 #%%
 prediction = knn_classifier.predict(binary_test_X)
 prediction
-#%%
-binary_test_y
-#%%
 
 #%%
 def print_samples(samples):
@@ -162,7 +158,6 @@ def print_samples(samples):
 precision, recall, f1, accuracy = binary_classification_metrics(prediction, binary_test_y)
 print("KNN with k = %s" % knn_classifier.k)
 print("Accuracy: %4.2f, Precision: %4.2f, Recall: %4.2f, F1: %4.2f" % (accuracy, precision, recall, f1)) 
-
 
 #%%
 # Let's put everything together and run KNN with k=3 and see how we do
@@ -179,7 +174,7 @@ print("Accuracy: %4.2f, Precision: %4.2f, Recall: %4.2f, F1: %4.2f" % (accuracy,
 # 
 # Попробуем найти лучшее значение k! 
 # 
-# Для этого мы воспользуемся k-fold cross-validation (https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). Мы разделим тренировочные данные на 5 фолдов (folds), и по очереди будем использовать каждый из них в качестве проверочных данных (validation data), а остальные -- в качестве тренировочных (training data).
+# Для этого мы воспользуемся [k-fold cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). Мы разделим тренировочные данные на 5 фолдов (folds), и по очереди будем использовать каждый из них в качестве проверочных данных (validation data), а остальные -- в качестве тренировочных (training data).
 # 
 # В качестве финальной оценки эффективности k мы усредним значения F1 score на всех фолдах.
 # После этого мы просто выберем значение k с лучшим значением метрики.
@@ -197,11 +192,7 @@ data_to_fold = binary_train_X
 answers_to_fold = binary_train_y
 fold_size = binary_train_y.shape[0]//num_folds
 
-#%%
 indices = random.sample(range(0, answers_to_fold.shape[0]), fold_size)
-set(range(0, answers_to_fold.shape[0])) - set(indices)
-
-#%%
 for fold_number in range(num_folds-1):
     indices_range = range(0, answers_to_fold.shape[0])
     indices = random.sample(indices_range, fold_size)
@@ -279,7 +270,6 @@ k_closest_indices.shape
 
 #%%
 predict = knn_classifier.predict(test_X)
-
 
 #%%
 accuracy = multiclass_accuracy(predict, test_y)
