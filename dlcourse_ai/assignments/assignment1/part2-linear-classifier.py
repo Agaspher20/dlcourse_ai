@@ -40,16 +40,14 @@ get_ipython().run_line_magic('load_ext', 'autoreload')
 get_ipython().run_line_magic('autoreload', '2')
 # pylint: enable=undefined-variable
 
-#%%
-from dataset import load_svhn, random_split_train_val
-from metrics import multiclass_accuracy
-
 #%% [markdown]
 # # Как всегда, первым делом загружаем данные
 # 
 # Мы будем использовать все тот же SVHN.
 
 #%%
+from dataset import load_svhn, random_split_train_val
+
 def prepare_for_linear_classifier(train_X, test_X):
     train_flat = train_X.reshape(train_X.shape[0], -1).astype(np.float) / 255.0
     test_flat = test_X.reshape(test_X.shape[0], -1).astype(np.float) / 255.0
@@ -272,6 +270,8 @@ plt.plot(loss_history)
 
 #%%
 # Let's check how it performs on validation set
+from metrics import multiclass_accuracy
+
 pred = classifier.predict(val_X)
 accuracy = multiclass_accuracy(pred, val_y)
 print("Accuracy: ", accuracy)
