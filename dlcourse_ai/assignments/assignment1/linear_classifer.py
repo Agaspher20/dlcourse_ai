@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def softmax(predictions):
     '''
     Computes probabilities from scores

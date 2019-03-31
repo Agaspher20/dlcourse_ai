@@ -78,6 +78,7 @@ train_X, train_y, val_X, val_y = random_split_train_val(train_X, train_y, num_va
 # $$
 
 #%%
+sys.path.insert(0, "..")
 from gradient_check import check_gradient
 
 def sqr(x):
