@@ -34,11 +34,6 @@ except:
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
-# pylint: disable=undefined-variable
-get_ipython().run_line_magic('matplotlib', 'inline')
-get_ipython().run_line_magic('load_ext', 'autoreload')
-get_ipython().run_line_magic('autoreload', '2')
-# pylint: enable=undefined-variable
 
 #%% [markdown]
 # # Как всегда, первым делом загружаем данные
@@ -46,6 +41,7 @@ get_ipython().run_line_magic('autoreload', '2')
 # Мы будем использовать все тот же SVHN.
 
 #%%
+sys.path.insert(0, "..")
 from dataset import load_svhn, random_split_train_val
 
 def prepare_for_linear_classifier(train_X, test_X):
@@ -62,7 +58,7 @@ def prepare_for_linear_classifier(train_X, test_X):
     test_flat_with_ones = np.hstack([test_flat, np.ones((test_X.shape[0], 1))])    
     return train_flat_with_ones, test_flat_with_ones
     
-train_X, train_y, test_X, test_y = load_svhn("data", max_train=10000, max_test=1000)    
+train_X, train_y, test_X, test_y = load_svhn("..\\data", max_train=10000, max_test=1000)    
 train_X, test_X = prepare_for_linear_classifier(train_X, test_X)
 # Split train into train and val
 train_X, train_y, val_X, val_y = random_split_train_val(train_X, train_y, num_val = 1000)
@@ -362,5 +358,3 @@ print('best validation accuracy achieved: %f' % best_val_accuracy)
 test_pred = best_classifier.predict(test_X)
 test_accuracy = multiclass_accuracy(test_pred, test_y)
 print('Linear softmax classifier test set accuracy: %f' % (test_accuracy, ))
-
-#%%

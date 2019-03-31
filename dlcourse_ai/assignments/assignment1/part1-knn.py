@@ -17,20 +17,20 @@ except:
 
 #%% [markdown]
 # # Задание 1.1 - Метод К-ближайших соседей (K-neariest neighbor classifier)
-# 
+#
 # В первом задании вы реализуете один из простейших алгоритмов машинного обучения - классификатор на основе метода K-ближайших соседей.
 # Мы применим его к задачам
 # - бинарной классификации (то есть, только двум классам)
 # - многоклассовой классификации (то есть, нескольким классам)
-# 
+#
 # Так как методу необходим гиперпараметр (hyperparameter) - количество соседей, мы выберем его на основе кросс-валидации (cross-validation).
-# 
+#
 # Наша основная задача - научиться пользоваться numpy и представлять вычисления в векторном виде, а также ознакомиться с основными метриками, важными для задачи классификации.
-# 
+#
 # Перед выполнением задания:
 # - запустите файл `download_data.sh`, чтобы скачать данные, которые мы будем использовать для тренировки
 # - установите все необходимые библиотеки, запустив `pip install -r requirements.txt` (если раньше не работали с `pip`, [вам сюда](https://pip.pypa.io/en/stable/quickstart/))
-# 
+#
 # Если вы раньше не работали с numpy, вам может помочь tutorial. [Например этот](http://cs231n.github.io/python-numpy-tutorial/).
 
 #%%
@@ -39,15 +39,9 @@ from functools import reduce
 import numpy as np
 import matplotlib.pyplot as plt
 
-get_ipython().run_line_magic("matplotlib", "inline")
-
-get_ipython().run_line_magic("load_ext", "autoreload")
-get_ipython().run_line_magic("autoreload", "2")
-
 #%%
+sys.path.insert(0, "..")
 from dataset import load_svhn
-from knn import KNN
-from metrics import binary_classification_metrics, multiclass_accuracy
 
 #%% [markdown]
 # # Загрузим и визуализируем данные
@@ -58,7 +52,7 @@ from metrics import binary_classification_metrics, multiclass_accuracy
 
 #%%
 train_X, train_y, test_X, test_y = load_svhn(
-    "data",
+    "..\\data",
     max_train=1000,
     max_test=100)
 
@@ -108,6 +102,7 @@ binary_test_X = binary_test_X.reshape(binary_test_X.shape[0], -1)
 # Классификатор KNN просто запоминает все данные
 
 #%%
+from knn import KNN
 knn_classifier = KNN(k=1)
 knn_classifier.fit(binary_train_X, binary_train_y)
 
@@ -155,6 +150,7 @@ def print_samples(samples):
         plt.show()
 
 #%%
+from metrics import binary_classification_metrics
 precision, recall, f1, accuracy = binary_classification_metrics(prediction, binary_test_y)
 print("KNN with k = %s" % knn_classifier.k)
 print("Accuracy: %4.2f, Precision: %4.2f, Recall: %4.2f, F1: %4.2f" % (accuracy, precision, recall, f1)) 
@@ -272,6 +268,7 @@ k_closest_indices.shape
 predict = knn_classifier.predict(test_X)
 
 #%%
+from metrics import multiclass_accuracy
 accuracy = multiclass_accuracy(predict, test_y)
 print("Accuracy: %4.2f" % accuracy)
 
@@ -343,5 +340,3 @@ prediction = best_knn_classifier.predict(test_X)
 # Accuracy should be around 20%!
 accuracy = multiclass_accuracy(prediction, test_y)
 print("Accuracy: %4.2f" % accuracy)
-
-#%%

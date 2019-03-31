@@ -3,7 +3,7 @@ import scipy.io as io
 import os
 
 
-def load_data_mat(filename, max_samples):
+def load_data_mat(filename, max_samples, seed=42):
     '''
     Loads numpy arrays from .mat file
 
@@ -19,10 +19,11 @@ def load_data_mat(filename, max_samples):
     # Fix up class 0 to be 0
     y[y == 10] = 0
 
+    np.random.seed(seed)
     samples = np.random.choice(np.arange(X.shape[0]),
                                max_samples,
                                replace=False)
-    
+
     return X[samples].astype(np.float32), y[samples]
 
 
@@ -47,7 +48,7 @@ def load_svhn(folder, max_train, max_test):
 def random_split_train_val(X, y, num_val, seed=42):
     '''
     Randomly splits dataset into training and validation
-    
+
     Arguments:
     X - np array with samples
     y - np array with labels
@@ -61,7 +62,7 @@ def random_split_train_val(X, y, num_val, seed=42):
     val_y, np array of int (num_val) - validation labels
     '''
     np.random.seed(seed)
-    
+
     indices = np.arange(X.shape[0])
     np.random.shuffle(indices)
 
@@ -74,5 +75,3 @@ def random_split_train_val(X, y, num_val, seed=42):
     val_y = y[val_indices]
 
     return train_X, train_y, val_X, val_y
-    
-    
