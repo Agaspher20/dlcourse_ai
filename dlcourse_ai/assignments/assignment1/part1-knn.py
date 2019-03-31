@@ -42,6 +42,7 @@ import matplotlib.pyplot as plt
 #%%
 sys.path.insert(0, "..")
 from dataset import load_svhn
+from metrics import binary_classification_metrics, multiclass_accuracy
 
 #%% [markdown]
 # # Загрузим и визуализируем данные
@@ -150,7 +151,6 @@ def print_samples(samples):
         plt.show()
 
 #%%
-from metrics import binary_classification_metrics
 precision, recall, f1, accuracy = binary_classification_metrics(prediction, binary_test_y)
 print("KNN with k = %s" % knn_classifier.k)
 print("Accuracy: %4.2f, Precision: %4.2f, Recall: %4.2f, F1: %4.2f" % (accuracy, precision, recall, f1)) 
@@ -268,7 +268,6 @@ k_closest_indices.shape
 predict = knn_classifier.predict(test_X)
 
 #%%
-from metrics import multiclass_accuracy
 accuracy = multiclass_accuracy(predict, test_y)
 print("Accuracy: %4.2f" % accuracy)
 

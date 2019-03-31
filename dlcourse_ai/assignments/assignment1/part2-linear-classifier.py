@@ -80,6 +80,7 @@ train_X, train_y, val_X, val_y = random_split_train_val(train_X, train_y, num_va
 #%%
 sys.path.insert(0, "..")
 from gradient_check import check_gradient
+from metrics import multiclass_accuracy
 
 def sqr(x):
     return x*x, 2*x
@@ -267,7 +268,6 @@ plt.plot(loss_history)
 
 #%%
 # Let's check how it performs on validation set
-from metrics import multiclass_accuracy
 
 pred = classifier.predict(val_X)
 accuracy = multiclass_accuracy(pred, val_y)

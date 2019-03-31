@@ -37,7 +37,7 @@ def cross_entropy_loss(probs, target_index):
 
     rows_count = target_index.shape[0]
 
-    return np.sum(-np.log(probs[range(rows_count), target_index]))/rows_count
+    return np.sum(-np.log(probs[range(rows_count), target_index]))
 
 
 def softmax_with_cross_entropy(predictions, target_index):
@@ -61,7 +61,6 @@ def softmax_with_cross_entropy(predictions, target_index):
     loss = cross_entropy_loss(probas, target_index)
     
     probas[range(rows_count), target_index] -= 1
-    probas /= rows_count
 
     return loss, probas
 
@@ -71,7 +70,7 @@ def l2_regularization(W, reg_strength):
     Computes L2 regularization loss on weights and its gradient
 
     Arguments:
-      W, np array - weights
+      W, np array - weights (num_featuresxnum_classes)
       reg_strength - float value
 
     Returns:
@@ -79,9 +78,7 @@ def l2_regularization(W, reg_strength):
       gradient, np.array same shape as W - gradient of weight by l2 loss
     '''
 
-    loss = reg_strength + np.sum(W**2, axis=1)
-
-    return np.sum(loss)/W.shape[0], 2*W/W.shape[0]
+    return reg_strength * np.sum(W**2), 2*reg_strength*W
     
 
 def linear_softmax(X, W, target_index):
@@ -139,8 +136,9 @@ class LinearSoftmaxClassifier():
             batch_target = y[batch_indices]
             ce_loss, d_ce_loss = linear_softmax(batch, self.W, batch_target)
             reg_loss, dreg_loss = l2_regularization(self.W, reg)
-            loss = ce_loss + reg_loss
-            dW = d_ce_loss + dreg_loss
+            batch_samples_count = batch.shape[0]
+            loss = (ce_loss + reg_loss)/batch_samples_count
+            dW = (d_ce_loss + dreg_loss)/batch_samples_count
             self.W -= dW*learning_rate
 
             loss_history.append(loss)

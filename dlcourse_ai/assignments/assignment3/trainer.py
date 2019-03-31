@@ -1,6 +1,8 @@
+import sys
 import numpy as np
 from copy import deepcopy
 
+sys.path.insert(0, "..")
 from metrics import multiclass_accuracy
 
 
