@@ -41,7 +41,7 @@ class Trainer:
         num_epochs, int - number of epochs to train
         batch_size, int - batch size
         learning_rate, float - initial learning rate
-        learning_rate_decal, float - ratio for decaying learning rate
+        learning_rate_decay, float - ratio for decaying learning rate
            every epoch
         """
         self.dataset = dataset
@@ -95,25 +95,20 @@ class Trainer:
             np.random.shuffle(shuffled_indices)
             sections = np.arange(self.batch_size, num_train, self.batch_size)
             batches_indices = np.array_split(shuffled_indices, sections)
+            batch_indices = batches_indices[np.random.randint(0, len(batches_indices))]
 
             batch_losses = []
+            batch = self.dataset.train_X[batch_indices, :]
+            batch_target = self.dataset.train_y[batch_indices]
+            batch_loss = self.model.compute_loss_and_gradients(batch, batch_target)
+            batch_losses.append(batch_loss)
 
-            for batch_indices in batches_indices:
-                # TODO Generate batches based on batch_indices and
-                # use model to generate loss and gradients for all
-                # the params
-
-                raise Exception("Not implemented!")
-
-                for param_name, param in self.model.params().items():
-                    optimizer = self.optimizers[param_name]
-                    param.value = optimizer.update(param.value, param.grad, self.learning_rate)
-
-                batch_losses.append(loss)
-
+            for param_name, param in self.model.params().items():
+                optimizer = self.optimizers[param_name]
+                param.value = optimizer.update(param.value, param.grad, self.learning_rate)
+            
             if np.not_equal(self.learning_rate_decay, 1.0):
-                # TODO: Implement learning rate decay
-                raise Exception("Not implemented!")
+                self.learning_rate *= self.learning_rate_decay
 
             ave_loss = np.mean(batch_losses)
 

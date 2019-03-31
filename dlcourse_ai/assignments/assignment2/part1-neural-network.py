@@ -30,6 +30,8 @@ import matplotlib.pyplot as plt
 
 #%%
 sys.path.insert(0, "..")
+from gradient_check import check_layer_gradient, check_layer_param_gradient, check_model_gradient
+from metrics import multiclass_accuracy
 from dataset import load_svhn, random_split_train_val
 
 #%% [markdown]
@@ -64,14 +66,12 @@ train_X, train_y, val_X, val_y = random_split_train_val(train_X, train_y, num_va
 # Начнем с ReLU, у которого параметров нет.
 
 #%%
-from gradient_check import check_layer_gradient
 from layers import ReLULayer
-# TODO: Implement ReLULayer layer in layers.py
-# Note: you'll need to copy implementation of the gradient_check function from the previous assignment
 
-X = np.array([[1,-2,3],
-              [-1, 2, 0.1]
-              ])
+X = np.array([
+    [1, -2, 3],
+    [-1, 2, 0.1]
+])
 
 assert check_layer_gradient(ReLULayer(), X)
 
@@ -83,13 +83,9 @@ assert check_layer_gradient(ReLULayer(), X)
 # Это даст возможность аккумулировать (суммировать) градиенты из разных частей функции потерь, например, из cross-entropy loss и regularization loss.
 
 #%%
-from gradient_check import check_layer_param_gradient
 from layers import FullyConnectedLayer
-# TODO: Implement FullyConnected layer forward and backward methods
 assert check_layer_gradient(FullyConnectedLayer(3, 4), X)
-# TODO: Implement storing gradients for W and B
 assert check_layer_param_gradient(FullyConnectedLayer(3, 4), X, 'W')
-assert check_layer_param_gradient(FullyConnectedLayer(3, 4), X, 'B')
 
 #%% [markdown]
 # ## Создаем нейронную сеть
@@ -99,21 +95,26 @@ assert check_layer_param_gradient(FullyConnectedLayer(3, 4), X, 'B')
 # Не забудьте реализовать очистку градиентов в начале функции.
 
 #%%
-from gradient_check import check_model_gradient
 from model import TwoLayerNet
-# TODO: In model.py, implement compute_loss_and_gradients function
-model = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 3, reg = 0)
+model = TwoLayerNet(
+    n_input = train_X.shape[1],
+    n_output = 10,
+    hidden_layer_size = 3,
+    reg = 0)
 loss = model.compute_loss_and_gradients(train_X[:2], train_y[:2])
 
-# TODO Now implement backward pass and aggregate all of the params
 check_model_gradient(model, train_X[:2], train_y[:2])
 
 #%% [markdown]
 # Теперь добавьте к модели регуляризацию - она должна прибавляться к loss и делать свой вклад в градиенты.
 
 #%%
-# TODO Now implement l2 regularization in the forward and backward pass
-model_with_reg = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 3, reg = 1e1)
+from model import TwoLayerNet
+model_with_reg = TwoLayerNet(
+    n_input = train_X.shape[1],
+    n_output = 10,
+    hidden_layer_size = 3,
+    reg = 1e1)
 loss_with_reg = model_with_reg.compute_loss_and_gradients(train_X[:2], train_y[:2])
 assert loss_with_reg > loss and not np.isclose(loss_with_reg, loss),     "Loss with regularization (%2.4f) should be higher than without it (%2.4f)!" % (loss, loss_with_reg)
 
@@ -127,9 +128,7 @@ check_model_gradient(model_with_reg, train_X[:2], train_y[:2])
 #%%
 # Finally, implement predict function!
 
-# TODO: Implement predict function
 # What would be the value we expect?
-from metrics import multiclass_accuracy
 multiclass_accuracy(model_with_reg.predict(train_X[:30]), train_y[:30]) 
 
 #%% [markdown]
@@ -138,18 +137,120 @@ multiclass_accuracy(model_with_reg.predict(train_X[:30]), train_y[:30])
 #%%
 from trainer import Trainer, Dataset
 from optim import SGD
-model = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 100, reg = 1e1)
+
+model = TwoLayerNet(
+        n_input = train_X.shape[1],
+        n_output = 10,
+        hidden_layer_size = 100,
+        reg = 0)
 dataset = Dataset(train_X, train_y, val_X, val_y)
 trainer = Trainer(model, dataset, SGD())
 
-# TODO Implement missing pieces in Trainer.fit function
 # You should expect loss to go down and train and val accuracy go up for every epoch
 loss_history, train_history, val_history = trainer.fit()
 
+best_rate = 1e-3
+best_train = np.max(train_history)
+best_loss_history = loss_history,
+best_train_history = train_history,
+best_val_history = val_history
+best_model = model
+for rate in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
+    model = TwoLayerNet(
+        n_input = train_X.shape[1],
+        n_output = 10,
+        hidden_layer_size = 100,
+        reg = 0)
+    dataset = Dataset(train_X, train_y, val_X, val_y)
+    trainer = Trainer(model, dataset, SGD(), learning_rate=rate)
+
+    # You should expect loss to go down and train and val accuracy go up for every epoch
+    loss_history, train_history, val_history = trainer.fit()
+    max_train = np.max(train_history)
+    if max_train > best_train:
+        best_train = max_train
+        best_rate = rate
+        best_loss_history = loss_history,
+        best_train_history = train_history,
+        best_val_history = val_history
+        best_model = model
+print("\nBest learning rate is {} with accuracy {}\n".format(best_rate, best_train))
+
+best_hidden_size = 100
+for hidden_size in [10, 30, 50, 70, 90, 110, 150, 180, 200, 250, 300]:
+    model = TwoLayerNet(
+        n_input = train_X.shape[1],
+        n_output = 10,
+        hidden_layer_size = hidden_size,
+        reg = 0)
+    dataset = Dataset(train_X, train_y, val_X, val_y)
+    trainer = Trainer(model, dataset, SGD(), learning_rate=best_rate)
+
+    # You should expect loss to go down and train and val accuracy go up for every epoch
+    loss_history, train_history, val_history = trainer.fit()
+    max_train = np.max(train_history)
+    if max_train > best_train:
+        best_train = max_train
+        best_hidden_size = hidden_size
+        best_loss_history = loss_history,
+        best_train_history = train_history,
+        best_val_history = val_history
+        best_model = model
+print("\nBest hidden layer size is {} with accuracy {}\n".format(best_hidden_size, best_train))
+    
+best_batch = 20
+for batch_size in [30, 50, 60, 80, 100, 150, 200, 300]:
+    model = TwoLayerNet(
+        n_input = train_X.shape[1],
+        n_output = 10,
+        hidden_layer_size = best_hidden_size,
+        reg = 0)
+    dataset = Dataset(train_X, train_y, val_X, val_y)
+    trainer = Trainer(model, dataset, SGD(), learning_rate=best_rate, batch_size=batch_size)
+
+    # You should expect loss to go down and train and val accuracy go up for every epoch
+    loss_history, train_history, val_history = trainer.fit()
+    max_train = np.max(train_history)
+    if max_train > best_train:
+        best_train = max_train
+        best_batch = batch_size
+        best_loss_history = loss_history,
+        best_train_history = train_history,
+        best_val_history = val_history
+        best_model = model
+print("\nBest batch_size is {} with accuracy {}\n".format(best_batch, best_train))
+
+best_reg = 0
+for reg in [1e-2,1e-1, -0.5, 0.5, 1, 1e1, 1e2]:
+    model = TwoLayerNet(
+        n_input = train_X.shape[1],
+        n_output = 10,
+        hidden_layer_size = best_hidden_size,
+        reg = reg)
+    dataset = Dataset(train_X, train_y, val_X, val_y)
+    trainer = Trainer(model, dataset, SGD(), learning_rate=best_rate, batch_size=best_batch)
+
+    # You should expect loss to go down and train and val accuracy go up for every epoch
+    loss_history, train_history, val_history = trainer.fit()
+    max_train = np.max(train_history)
+    if max_train > best_train:
+        best_train = max_train
+        best_reg = reg
+        best_loss_history = loss_history,
+        best_train_history = train_history,
+        best_val_history = val_history
+        best_model = model
+print("\nBest reg is {} with accuracy {}\n".format(best_reg, best_train))
 
 #%%
-plt.plot(train_history)
-plt.plot(val_history)
+best_model.predict(dataset.val_X)
+
+#%%
+plt.plot(best_loss_history)
+#%%
+plt.plot(best_train_history)
+#%%
+plt.plot(best_val_history)
 
 #%% [markdown]
 # # Улучшаем процесс тренировки
@@ -165,9 +266,6 @@ plt.plot(val_history)
 # В нашем случае N будет равным 1.
 
 #%%
-# TODO Implement learning rate decay inside Trainer.fit method
-# Decay should happen once per epoch
-
 model = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 100, reg = 1e-1)
 dataset = Dataset(train_X, train_y, val_X, val_y)
 trainer = Trainer(model, dataset, SGD(), learning_rate_decay=0.99)
@@ -193,8 +291,8 @@ assert trainer.learning_rate > 0.5*initial_learning_rate, "Learning rate shouldn
 # 
 # `momentum` здесь коэффициент затухания, который тоже является гиперпараметром (к счастью, для него часто есть хорошее значение по умолчанию, типичный диапазон -- 0.8-0.99).
 # 
-# Несколько полезных ссылок, где метод разбирается более подробно:  
-# http://cs231n.github.io/neural-networks-3/#sgd  
+# Несколько полезных ссылок, где метод разбирается более подробно:
+# http://cs231n.github.io/neural-networks-3/#sgd
 # https://distill.pub/2017/momentum/
 
 #%%
@@ -291,5 +389,3 @@ plt.plot(val_history)
 test_pred = best_classifier.predict(test_X)
 test_accuracy = multiclass_accuracy(test_pred, test_y)
 print('Neural net test set accuracy: %f' % (test_accuracy, ))
-
-
