@@ -96,6 +96,7 @@ assert check_layer_param_gradient(FullyConnectedLayer(3, 4), X, 'W')
 
 #%%
 from model import TwoLayerNet
+
 model = TwoLayerNet(
     n_input = train_X.shape[1],
     n_output = 10,
@@ -137,112 +138,34 @@ multiclass_accuracy(model_with_reg.predict(train_X[:30]), train_y[:30])
 #%%
 from trainer import Trainer, Dataset
 from optim import SGD
+from modelGridSearch import search_model
 
-model = TwoLayerNet(
+(
+    best_model,
+    best_model_keys,
+    best_trainer_keys,
+    best_loss_history,
+    best_train_history,
+    best_val_history
+) = search_model(
+    lambda: TwoLayerNet(
         n_input = train_X.shape[1],
         n_output = 10,
         hidden_layer_size = 100,
-        reg = 0)
-dataset = Dataset(train_X, train_y, val_X, val_y)
-trainer = Trainer(model, dataset, SGD())
-
-# You should expect loss to go down and train and val accuracy go up for every epoch
-loss_history, train_history, val_history = trainer.fit()
-
-best_rate = 1e-3
-best_train = np.max(train_history)
-best_loss_history = loss_history,
-best_train_history = train_history,
-best_val_history = val_history
-best_model = model
-for rate in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
-    model = TwoLayerNet(
-        n_input = train_X.shape[1],
-        n_output = 10,
-        hidden_layer_size = 100,
-        reg = 0)
-    dataset = Dataset(train_X, train_y, val_X, val_y)
-    trainer = Trainer(model, dataset, SGD(), learning_rate=rate)
-
-    # You should expect loss to go down and train and val accuracy go up for every epoch
-    loss_history, train_history, val_history = trainer.fit()
-    max_train = np.max(train_history)
-    if max_train > best_train:
-        best_train = max_train
-        best_rate = rate
-        best_loss_history = loss_history,
-        best_train_history = train_history,
-        best_val_history = val_history
-        best_model = model
-print("\nBest learning rate is {} with accuracy {}\n".format(best_rate, best_train))
-
-best_hidden_size = 100
-for hidden_size in [10, 30, 50, 70, 90, 110, 150, 180, 200, 250, 300]:
-    model = TwoLayerNet(
-        n_input = train_X.shape[1],
-        n_output = 10,
-        hidden_layer_size = hidden_size,
-        reg = 0)
-    dataset = Dataset(train_X, train_y, val_X, val_y)
-    trainer = Trainer(model, dataset, SGD(), learning_rate=best_rate)
-
-    # You should expect loss to go down and train and val accuracy go up for every epoch
-    loss_history, train_history, val_history = trainer.fit()
-    max_train = np.max(train_history)
-    if max_train > best_train:
-        best_train = max_train
-        best_hidden_size = hidden_size
-        best_loss_history = loss_history,
-        best_train_history = train_history,
-        best_val_history = val_history
-        best_model = model
-print("\nBest hidden layer size is {} with accuracy {}\n".format(best_hidden_size, best_train))
-    
-best_batch = 20
-for batch_size in [30, 50, 60, 80, 100, 150, 200, 300]:
-    model = TwoLayerNet(
-        n_input = train_X.shape[1],
-        n_output = 10,
-        hidden_layer_size = best_hidden_size,
-        reg = 0)
-    dataset = Dataset(train_X, train_y, val_X, val_y)
-    trainer = Trainer(model, dataset, SGD(), learning_rate=best_rate, batch_size=batch_size)
-
-    # You should expect loss to go down and train and val accuracy go up for every epoch
-    loss_history, train_history, val_history = trainer.fit()
-    max_train = np.max(train_history)
-    if max_train > best_train:
-        best_train = max_train
-        best_batch = batch_size
-        best_loss_history = loss_history,
-        best_train_history = train_history,
-        best_val_history = val_history
-        best_model = model
-print("\nBest batch_size is {} with accuracy {}\n".format(best_batch, best_train))
-
-best_reg = 0
-for reg in [1e-2,1e-1, -0.5, 0.5, 1, 1e1, 1e2]:
-    model = TwoLayerNet(
-        n_input = train_X.shape[1],
-        n_output = 10,
-        hidden_layer_size = best_hidden_size,
-        reg = reg)
-    dataset = Dataset(train_X, train_y, val_X, val_y)
-    trainer = Trainer(model, dataset, SGD(), learning_rate=best_rate, batch_size=best_batch)
-
-    # You should expect loss to go down and train and val accuracy go up for every epoch
-    loss_history, train_history, val_history = trainer.fit()
-    max_train = np.max(train_history)
-    if max_train > best_train:
-        best_train = max_train
-        best_reg = reg
-        best_loss_history = loss_history,
-        best_train_history = train_history,
-        best_val_history = val_history
-        best_model = model
-print("\nBest reg is {} with accuracy {}\n".format(best_reg, best_train))
+        reg = 0),
+    lambda model: Trainer(model, Dataset(train_X, train_y, val_X, val_y), SGD()),
+    {
+        "hidden_layer_size": [10, 30, 50, 70, 90, 110, 150, 180, 200, 250, 300],
+        "reg": [1e-2,1e-1, -0.5, 0.5, 1, 1e1, 1e2],
+    },
+    {
+        "learning_rate": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
+        "batch_size": [30, 50, 60, 80, 100, 150, 200, 300],
+    }
+)
 
 #%%
+dataset = Dataset(train_X, train_y, val_X, val_y)
 best_model.predict(dataset.val_X)
 
 #%%

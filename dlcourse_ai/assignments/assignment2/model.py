@@ -20,12 +20,20 @@ class TwoLayerNet:
         hidden_layer_size, int - number of neurons in the hidden layer
         reg, float - L2 regularization strength
         """
+
+        self.n_input = n_input
+        self.n_output = n_output
+        self.hidden_layer_size = hidden_layer_size
         self.reg = reg
-        self.layers = [
-          ("Input Layer", FullyConnectedLayer(n_input, hidden_layer_size)),
-          ("Hidden Layer", FullyConnectedLayer(hidden_layer_size, n_output)),
-          ("ReLU Layer", ReLULayer()),
-        ]
+        self.layers = None
+
+    def ensure_layers(self):
+        if self.layers is None:
+            self.layers = [
+                ("Input Layer", FullyConnectedLayer(self.n_input, self.hidden_layer_size)),
+                ("Hidden Layer", FullyConnectedLayer(self.hidden_layer_size, self.n_output)),
+                ("ReLU Layer", ReLULayer()),
+            ]
 
     def compute_loss_and_gradients(self, X, y):
         """
@@ -36,6 +44,9 @@ class TwoLayerNet:
         X, np array (batch_size, input_features) - input data
         y, np array of int (batch_size) - classes
         """
+
+        self.ensure_layers()
+
         # Before running forward and backward pass through the model,
         # clear parameter gradients aggregated from the previous pass
         for _,layer in self.layers:
@@ -75,12 +86,17 @@ class TwoLayerNet:
 
         predictions = X
 
+        if self.layers is None:
+            raise BaseException("Model must be fitted before predictin values")
+
         for _,layer in self.layers:
             predictions = layer.forward(predictions)
         return np.argmax(predictions, axis=1)
 
     def params(self):
         result = {}
+
+        self.ensure_layers()
 
         for name,layer in self.layers:
             layer_params = layer.params()
