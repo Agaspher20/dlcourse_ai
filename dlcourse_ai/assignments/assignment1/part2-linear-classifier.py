@@ -359,3 +359,5 @@ print('best validation accuracy achieved: %f' % best_val_accuracy)
 test_pred = best_classifier.predict(test_X)
 test_accuracy = multiclass_accuracy(test_pred, test_y)
 print('Linear softmax classifier test set accuracy: %f' % (test_accuracy, ))
+
+#%%

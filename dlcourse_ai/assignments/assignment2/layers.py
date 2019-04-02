@@ -1,6 +1,9 @@
 import sys
 import numpy as np
 
+sys.path.insert(0, "..\\assignment1")
+from linear_classifer import softmax_with_cross_entropy, l2_regularization
+
 class Param:
     """
     Trainable parameter of the model
@@ -47,9 +50,50 @@ class ReLULayer:
         return {}
 
 class FullyConnectedLayer:
-    def __init__(self, n_input, n_output):
+    def __init__(self, n_input, n_output, reg=0):
         self.W = Param(0.001 * np.random.randn(n_input + 1, n_output))
+        self.reg = reg
         self.X = None
+
+    def compute_loss_and_gradients(self, X, y):
+        """
+        Behaves like fully functional model.
+        Computes total loss and updates parameter gradients
+        on a batch of training examples
+
+        Arguments:
+        X, np array (batch_size, input_features) - input data
+        y, np array of int (batch_size) - classes
+        """
+
+        self.clean_gradients()
+        predictions = self.forward(X)
+        predictions_count = predictions.shape[0]
+
+        reg_loss, dreg_loss = l2_regularization(self.W.value, self.reg)
+        self.W.grad += dreg_loss/predictions_count
+
+        loss, grad = softmax_with_cross_entropy(predictions, y)
+        loss += reg_loss
+        loss/=predictions_count
+        grad/=predictions_count
+
+        self.backward(grad)
+
+        return loss
+
+    def predict(self, X):
+        """
+        Produces layer predictions on the set
+
+        Arguments:
+          X, np array (test_samples, num_features)
+
+        Returns:
+          y_pred, np.array of int (test_samples)
+        """
+
+        return np.argmax(self.forward(X), axis=1)
 
     def forward(self, X):
         self.X = np.hstack((
