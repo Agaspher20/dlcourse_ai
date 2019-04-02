@@ -31,8 +31,8 @@ class TwoLayerNet:
         if self.layers is None:
             self.layers = [
                 ("Input Layer", FullyConnectedLayer(self.n_input, self.hidden_layer_size)),
-                ("Hidden Layer", FullyConnectedLayer(self.hidden_layer_size, self.n_output)),
                 ("ReLU Layer", ReLULayer()),
+                ("Hidden Layer", FullyConnectedLayer(self.hidden_layer_size, self.n_output)),
             ]
 
     def compute_loss_and_gradients(self, X, y):
