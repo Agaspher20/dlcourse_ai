@@ -146,7 +146,7 @@ model = TwoLayerNet(
     hidden_layer_size = 100,
     reg = 1e-1)
 dataset = Dataset(train_X, train_y, val_X, val_y)
-trainer = Trainer(model, dataset, SGD(), learning_rate=1e-4)
+trainer = Trainer(model, dataset, SGD())
 loss_history, train_history, val_history = trainer.fit()
 
 #%%
@@ -183,7 +183,6 @@ trainer = Trainer(
     model,
     dataset,
     SGD(),
-    learning_rate=1e-4,
     learning_rate_decay=0.99)
 
 initial_learning_rate = trainer.learning_rate
@@ -221,7 +220,11 @@ model = TwoLayerNet(
     hidden_layer_size = 100,
     reg = 1e-1)
 dataset = Dataset(train_X, train_y, val_X, val_y)
-trainer = Trainer(model, dataset, MomentumSGD(), learning_rate=1e-4, learning_rate_decay=0.99)
+trainer = Trainer(
+    model,
+    dataset,
+    MomentumSGD(),
+    learning_rate_decay=0.99)
 
 # You should see even better results than before!
 loss_history, train_history, val_history = trainer.fit()
