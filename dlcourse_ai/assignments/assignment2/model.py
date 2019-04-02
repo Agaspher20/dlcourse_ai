@@ -53,20 +53,19 @@ class TwoLayerNet:
             layer.clean_gradients()
 
         predictions = X
+        predictions_count = predictions.shape[0]
         full_reg_loss = 0
-        full_reg_grad = 0
         for _,layer in self.layers:
             predictions = layer.forward(predictions)
             for param in layer.params().values():
                 reg_loss, dreg_loss = l2_regularization(param.value, self.reg)
                 full_reg_loss += reg_loss
-                param.grad += dreg_loss/predictions.shape[0]
+                param.grad += dreg_loss/predictions_count
 
         loss, grad = softmax_with_cross_entropy(predictions, y)
         loss += full_reg_loss
-        grad += full_reg_grad
-        loss/=predictions.shape[0]
-        grad/=predictions.shape[0]
+        loss/=predictions_count
+        grad/=predictions_count
 
         for _,layer in reversed(self.layers):
             grad = layer.backward(grad)
