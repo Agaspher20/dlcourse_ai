@@ -140,40 +140,24 @@ from trainer import Trainer, Dataset
 from optim import SGD
 from modelGridSearch import search_model
 
-(
-    best_model,
-    best_model_keys,
-    best_trainer_keys,
-    best_loss_history,
-    best_train_history,
-    best_val_history
-) = search_model(
-    lambda: TwoLayerNet(
-        n_input = train_X.shape[1],
-        n_output = 10,
-        hidden_layer_size = 100,
-        reg = 0),
-    lambda model: Trainer(model, Dataset(train_X, train_y, val_X, val_y), SGD()),
-    {
-        "hidden_layer_size": [10, 30, 50, 70, 90, 110, 150, 180, 200, 250, 300],
-        "reg": [1e-2,1e-1, -0.5, 0.5, 1, 1e1, 1e2],
-    },
-    {
-        "learning_rate": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
-        "batch_size": [30, 50, 60, 80, 100, 150, 200, 300],
-    }
-)
+model = TwoLayerNet(
+    n_input = train_X.shape[1],
+    n_output = 10,
+    hidden_layer_size = 100,
+    reg = 1e-1)
+dataset = Dataset(train_X, train_y, val_X, val_y)
+trainer = Trainer(model, dataset, SGD(), learning_rate=1e-4)
+loss_history, train_history, val_history = trainer.fit()
 
 #%%
 dataset = Dataset(train_X, train_y, val_X, val_y)
-best_model.predict(dataset.val_X)
+model.predict(dataset.val_X)
 
 #%%
-plt.plot(best_loss_history)
+plt.plot(loss_history)
 #%%
-plt.plot(best_train_history)
-#%%
-plt.plot(best_val_history)
+plt.plot(train_history)
+plt.plot(val_history)
 
 #%% [markdown]
 # # Улучшаем процесс тренировки
@@ -189,9 +173,18 @@ plt.plot(best_val_history)
 # В нашем случае N будет равным 1.
 
 #%%
-model = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 100, reg = 1e-1)
+model = TwoLayerNet(
+    n_input = train_X.shape[1],
+    n_output = 10,
+    hidden_layer_size = 100,
+    reg = 1e-1)
 dataset = Dataset(train_X, train_y, val_X, val_y)
-trainer = Trainer(model, dataset, SGD(), learning_rate_decay=0.99)
+trainer = Trainer(
+    model,
+    dataset,
+    SGD(),
+    learning_rate=1e-4,
+    learning_rate_decay=0.99)
 
 initial_learning_rate = trainer.learning_rate
 loss_history, train_history, val_history = trainer.fit()
@@ -215,19 +208,26 @@ assert trainer.learning_rate > 0.5*initial_learning_rate, "Learning rate shouldn
 # `momentum` здесь коэффициент затухания, который тоже является гиперпараметром (к счастью, для него часто есть хорошее значение по умолчанию, типичный диапазон -- 0.8-0.99).
 # 
 # Несколько полезных ссылок, где метод разбирается более подробно:
-# http://cs231n.github.io/neural-networks-3/#sgd
-# https://distill.pub/2017/momentum/
+#
+# - http://cs231n.github.io/neural-networks-3/#sgd
+# - https://distill.pub/2017/momentum/
 
 #%%
 from optim import MomentumSGD
-# TODO: Implement MomentumSGD.update function in optim.py
 
-model = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 100, reg = 1e-1)
+model = TwoLayerNet(
+    n_input = train_X.shape[1],
+    n_output = 10,
+    hidden_layer_size = 100,
+    reg = 1e-1)
 dataset = Dataset(train_X, train_y, val_X, val_y)
 trainer = Trainer(model, dataset, MomentumSGD(), learning_rate=1e-4, learning_rate_decay=0.99)
 
 # You should see even better results than before!
 loss_history, train_history, val_history = trainer.fit()
+
+#%%
+model.predict(dataset.val_X)
 
 #%% [markdown]
 # # Ну что, давайте уже тренировать сеть!
@@ -241,9 +241,19 @@ loss_history, train_history, val_history = trainer.fit()
 
 #%%
 data_size = 15
-model = TwoLayerNet(n_input = train_X.shape[1], n_output = 10, hidden_layer_size = 100, reg = 1e-1)
+model = TwoLayerNet(
+    n_input = train_X.shape[1],
+    n_output = 10,
+    hidden_layer_size = 100,
+    reg = 1e-1)
 dataset = Dataset(train_X[:data_size], train_y[:data_size], val_X[:data_size], val_y[:data_size])
-trainer = Trainer(model, dataset, SGD(), learning_rate=1e-1, num_epochs=150, batch_size=5)
+trainer = Trainer(
+    model,
+    dataset,
+    SGD(),
+    learning_rate=1e-1,
+    num_epochs=150,
+    batch_size=5)
 
 # You should expect this to reach 1.0 training accuracy 
 loss_history, train_history, val_history = trainer.fit()
